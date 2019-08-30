@@ -33,8 +33,6 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			return xamlSourceFiles
 				.AsParallel()
 				.Select(ParseFile)
-				.Trim()
-                .OrderBy(f => f.UniqueID)
 				.ToArray();
 		}
 
