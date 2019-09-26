@@ -149,6 +149,8 @@ namespace Windows.UI.Xaml.Controls
 			m_bIsNavigationAcceptOrGamepadAKeyDown = false;
 			m_shouldPerformActions = false;
 
+			DefaultStyleKey = typeof(MenuFlyoutItem);
+
 			Initialize();
 		}
 

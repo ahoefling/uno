@@ -74,6 +74,8 @@ namespace Windows.UI.Xaml.Controls
 			_isPassword = false;
 			InitializeVisualStates();
 			this.RegisterParentChangedCallback(this, OnParentChanged);
+
+			DefaultStyleKey = typeof(TextBox);
 		}
 
 		private void OnParentChanged(object instance, object key, DependencyObjectParentChangedEventArgs args) => UpdateFontPartial();

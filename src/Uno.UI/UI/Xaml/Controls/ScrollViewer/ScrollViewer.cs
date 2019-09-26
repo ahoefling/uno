@@ -1,5 +1,5 @@
 ﻿#if NET461
-#pragma warning disable CS0067 
+#pragma warning disable CS0067
 #endif
 
 using System;
@@ -65,6 +65,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public ScrollViewer()
 		{
+			DefaultStyleKey = typeof(ScrollViewer);
+
 			UpdatesMode = Uno.UI.Xaml.Controls.ScrollViewer.GetUpdatesMode(this);
 			InitializePartial();
 		}
@@ -616,7 +618,7 @@ namespace Windows.UI.Xaml.Controls
 		/// <remarks>Used in the context of member initialization</remarks>
 		public
 #if !__WASM__ && !__MACOS__
-			new 
+			new
 #endif
 			void Add(View view)
 		{
