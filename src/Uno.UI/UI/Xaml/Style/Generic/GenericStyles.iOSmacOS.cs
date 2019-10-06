@@ -28,7 +28,6 @@ namespace Windows.UI.Xaml
 	public static partial class GenericStyles
 	{
 		static partial void InitStyles() {
-			InitWebView();
 			InitFlyoutPresenter();
 			InitDatePicker();
 			InitDatePickerSelector();
@@ -110,22 +109,6 @@ namespace Windows.UI.Xaml
 			Style.RegisterDefaultStyleForType(typeof(StructuredContentPresenter), style);
 		}
 #endif
-
-		private static void InitWebView()
-		{
-#if !__MACOS__
-			var style = new Style(typeof(Windows.UI.Xaml.Controls.WebView))
-			{
-				Setters =  {
-					new Setter<WebView>("Template", t =>
-						t.Template = Funcs.Create<UIView>(() => (UIView)new UnoWKWebView() 
-						)
-					)
-				}
-			};
-
-			Style.RegisterDefaultStyleForType(typeof(Windows.UI.Xaml.Controls.WebView), () => style);
-		}
 
 #if !IS_UNO
 		private static void InitExpander()
