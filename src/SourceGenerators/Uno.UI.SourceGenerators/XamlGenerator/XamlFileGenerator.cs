@@ -934,8 +934,8 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		private void InitializeAndBuildResourceDictionary(IIndentedStringBuilder writer, XamlObjectDefinition topLevelControl)
 		{
 			writer.AppendLineInvariant("new ResourceDictionary {{");
-			BuildResourceDictionary(writer, FindImplicitContentMember(topLevelControl), isInInitializer: true);
 			BuildMergedDictionaries(writer, topLevelControl.Members.FirstOrDefault(m => m.Member.Name == "MergedDictionaries"), isInInitializer: true);
+			BuildResourceDictionary(writer, FindImplicitContentMember(topLevelControl), isInInitializer: true);
 			BuildThemeDictionaries(writer, topLevelControl.Members.FirstOrDefault(m => m.Member.Name == "ThemeDictionaries"), isInInitializer: true);
 			writer.AppendLineInvariant("}}");
 		}
@@ -1895,8 +1895,8 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 						writer.AppendLineInvariant("Resources = {{");
 					}
 
-					BuildResourceDictionary(writer, resourcesRoot, isInInitializer);
 					BuildMergedDictionaries(writer, mergedDictionaries, isInInitializer);
+					BuildResourceDictionary(writer, resourcesRoot, isInInitializer);
 					BuildThemeDictionaries(writer, themeDictionaries, isInInitializer);
 
 					if (isInInitializer)
@@ -1970,9 +1970,9 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// <summary>
 		/// Build a collection of ResourceDictionaries.
 		/// </summary>
-		private void BuildDictionaryCollection(IIndentedStringBuilder writer, XamlMemberDefinition mergedDictionaries, bool isInInitializer, string propertyName, bool isDict)
+		private void BuildDictionaryCollection(IIndentedStringBuilder writer, XamlMemberDefinition dictionaries, bool isInInitializer, string propertyName, bool isDict)
 		{
-			if (mergedDictionaries == null)
+			if (dictionaries == null)
 			{
 				return;
 			}
@@ -1985,7 +1985,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			{
 				writer.AppendLineInvariant("// {0}", propertyName);
 			}
-			foreach (var dictObject in mergedDictionaries.Objects)
+			foreach (var dictObject in dictionaries.Objects)
 			{
 				if (dictObject.Members.Count == 0)
 				{
