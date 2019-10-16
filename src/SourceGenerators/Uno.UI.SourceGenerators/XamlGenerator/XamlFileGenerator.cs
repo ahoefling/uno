@@ -941,8 +941,8 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 				TrySetParsing(writer, topLevelControl, isInitializer: true);
 			}
 			BuildMergedDictionaries(writer, topLevelControl.Members.FirstOrDefault(m => m.Member.Name == "MergedDictionaries"), isInInitializer: true);
-			BuildResourceDictionary(writer, FindImplicitContentMember(topLevelControl), isInInitializer: true);
 			BuildThemeDictionaries(writer, topLevelControl.Members.FirstOrDefault(m => m.Member.Name == "ThemeDictionaries"), isInInitializer: true);
+			BuildResourceDictionary(writer, FindImplicitContentMember(topLevelControl), isInInitializer: true);
 			writer.AppendLineInvariant("}}");
 		}
 
@@ -1902,8 +1902,8 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 					}
 
 					BuildMergedDictionaries(writer, mergedDictionaries, isInInitializer);
-					BuildResourceDictionary(writer, resourcesRoot, isInInitializer);
 					BuildThemeDictionaries(writer, themeDictionaries, isInInitializer);
+					BuildResourceDictionary(writer, resourcesRoot, isInInitializer);
 
 					if (isInInitializer)
 					{
