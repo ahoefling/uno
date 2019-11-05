@@ -18,6 +18,7 @@ using Uno;
 using Uno.Equality;
 using Uno.Logging;
 using Uno.UI.SourceGenerators.XamlGenerator.XamlRedirection;
+using System.Runtime.CompilerServices;
 
 namespace Uno.UI.SourceGenerators.XamlGenerator
 {
@@ -111,6 +112,11 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private readonly bool _isWasm;
 
+		/// <summary>
+		/// If set, code generated from XAML will be annotated with the source method and line # in this file, for easier debugging.
+		/// </summary>
+		private readonly bool _shouldAnnotateGeneratedXaml;
+
 		static XamlFileGenerator()
 		{
 			_findContentProperty = Funcs.Create<INamedTypeSymbol, IPropertySymbol>(SourceFindContentProperty).AsLockedMemoized();
@@ -133,7 +139,8 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			string defaultLanguage,
 			bool isWasm,
 			bool isDebug,
-			bool skipUserControlsInVisualTree
+			bool skipUserControlsInVisualTree,
+			bool shouldAnnotateGeneratedXaml
 		)
 		{
 			_fileDefinition = file;
@@ -151,6 +158,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			_defaultLanguage = defaultLanguage.HasValue() ? defaultLanguage : "en-US";
 			_isDebug = isDebug;
 			_skipUserControlsInVisualTree = skipUserControlsInVisualTree;
+			_shouldAnnotateGeneratedXaml = shouldAnnotateGeneratedXaml;
 
 			InitCaches();
 
@@ -356,6 +364,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildInitializeXamlOwner(IndentedStringBuilder writer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			using (writer.BlockInvariant("private void InitializeXamlOwner()"))
 			{
 				if (_hasLiteralEventsRegistration)
@@ -369,6 +378,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildXamlApplyBlocks(IndentedStringBuilder writer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			using (writer.BlockInvariant("namespace {0}", _defaultNamespace))
 			{
 				using (writer.BlockInvariant("static class {0}XamlApplyExtensions", _fileUniqueId))
@@ -394,6 +404,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildApplicationInitializerBody(IndentedStringBuilder writer, XamlObjectDefinition topLevelControl)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			InitializeRemoteControlClient(writer);
 			GenerateApiExtensionRegistrations(writer);
 			
@@ -471,6 +482,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void GenerateResourceLoader(IndentedStringBuilder writer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			writer.AppendLineInvariant($"global::Windows.ApplicationModel.Resources.ResourceLoader.DefaultLanguage = \"{_defaultLanguage}\";");
 
 			writer.AppendLineInvariant($"global::Windows.ApplicationModel.Resources.ResourceLoader.AddLookupAssembly(GetType().Assembly);");
@@ -499,6 +511,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// <param name="isDirectUserControlChild">True if the defined control directly inherits from UserControl.</param>
 		private void BuildGenericControlInitializerBody(IndentedStringBuilder writer, XamlObjectDefinition topLevelControl, bool isDirectUserControlChild)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			// OnInitializeCompleted() seems to be used by some older code as a substitute for the constructor for UserControls, which are optimized out of the visual tree.
 			RegisterPartial("void OnInitializeCompleted()");
 
@@ -549,6 +562,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildPartials(IIndentedStringBuilder writer, bool isStatic)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			foreach (var partialDefinition in _partials)
 			{
 				writer.AppendLineInvariant("{0}partial " + partialDefinition + ";", isStatic ? "static " : "");
@@ -557,6 +571,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildBackingFields(IIndentedStringBuilder writer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			foreach (var backingFieldDefinition in CurrentScope.BackingFields.Distinct())
 			{
 				var sanitizedFieldName = SanitizeResourceName(backingFieldDefinition.Name);
@@ -601,6 +616,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildChildSubclasses(IIndentedStringBuilder writer, bool isTopLevel = false)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var disposable = isTopLevel ? writer.BlockInvariant("namespace {0}.__Resources", _defaultNamespace) : null;
 
 			using (disposable)
@@ -717,6 +733,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildTopLevelResourceDictionary(IIndentedStringBuilder writer, XamlObjectDefinition topLevelControl)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			_isTopLevelDictionary = true;
 			var globalResources = new Dictionary<string, XamlObjectDefinition>();
 
@@ -774,6 +791,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// <param name="dictionaryObject">The <see cref="XamlObjectDefinition"/> associated with the dictionary.</param>
 		private void BuildResourceDictionaryGlobalProperties(IIndentedStringBuilder writer, XamlObjectDefinition dictionaryObject)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var resourcesRoot = FindImplicitContentMember(dictionaryObject);
 			var theme = GetDictionaryResourceKey(dictionaryObject);
 			var resources = (resourcesRoot?.Objects).Safe();
@@ -839,6 +857,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildStaticResourceResourceKeyReference(IIndentedStringBuilder writer, XamlObjectDefinition resourceDefinition)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var targetKey = resourceDefinition.Members.FirstOrDefault(m => m.Member.Name == "ResourceKey")?.Value as string;
 
 			writer.AppendLineInvariant(GetSimpleStaticResourceRetrieval(null, targetKey));
@@ -903,6 +922,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildDefaultStylesRegistration(IIndentedStringBuilder writer, XamlMemberDefinition resourcesRoot)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var stylesCandidates = resourcesRoot?.Objects.Where(o => o.Type.Name == "Style" && GetExplicitDictionaryResourceKey(o, out var _) == null);
 			if (stylesCandidates?.None() ?? true)
 			{
@@ -945,6 +965,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void InitializeAndBuildResourceDictionary(IIndentedStringBuilder writer, XamlObjectDefinition topLevelControl, bool setIsParsing)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			writer.AppendLineInvariant("new ResourceDictionary {{");
 			if (setIsParsing)
 			{
@@ -958,6 +979,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildEmptyBackingClass(IIndentedStringBuilder writer, XamlObjectDefinition topLevelControl)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var className = FindClassName(topLevelControl);
 
 			if (className.ns != null)
@@ -981,6 +1003,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			XamlObjectDefinition topLevelControl
 		)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var resources = new Dictionary<string, XamlObjectDefinition>();
 
 			XamlMemberDefinition contentNode;
@@ -1068,6 +1091,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// <param name="isStatic"></param>
 		private void BuildSingleTimeInitializer(IIndentedStringBuilder writer, string propertyType, string propertyName, Action propertyBodyBuilder, bool isStatic = true)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			// The property type may be partially qualified, try resolving it through FindType
 			var propertySymbol = FindType(propertyType);
 			propertyType = propertySymbol?.GetFullName() ?? propertyType;
@@ -1110,6 +1134,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildSourceLineInfo(IIndentedStringBuilder writer, XamlObjectDefinition definition)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (_outputSourceComments)
 			{
 				writer.AppendLineInvariant(
@@ -1126,6 +1151,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			IEnumerable<KeyValuePair<string, XamlObjectDefinition>> namedResources
 		)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			foreach (var namedResource in namedResources)
 			{
 				BuildSourceLineInfo(writer, namedResource.Value);
@@ -1175,6 +1201,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildInlineStyle(IIndentedStringBuilder writer, XamlObjectDefinition style)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var targetTypeNode = GetMember(style, "TargetType");
 			var targetType = targetTypeNode.Value.ToString();
 			var fullTargetType = FindType(targetType).SelectOrDefault(t => t.ToDisplayString(), targetType);
@@ -1232,6 +1259,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildPropertySetter(IIndentedStringBuilder writer, string fullTargetType, string lineEnding, string property, XamlMemberDefinition valueNode, string targetInstance = null)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			targetInstance = targetInstance ?? "o";
 
 			property = property?.Trim('(', ')');
@@ -1328,6 +1356,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void GenerateError(IIndentedStringBuilder writer, string message, params object[] options)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (ShouldWriteErrorOnInvalidXaml)
 			{
 				// it's important to add a new line to make sure #error is on its own line.
@@ -1343,6 +1372,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void GenerateSilentWarning(IIndentedStringBuilder writer, string message, params object[] options)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			// it's important to add a new line to make sure #error is on its own line.
 			writer.AppendLineInvariant(string.Empty);
 			writer.AppendLineInvariant("// WARNING " + message, options);
@@ -1485,6 +1515,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private bool BuildProperties(IIndentedStringBuilder writer, XamlObjectDefinition topLevelControl, bool isInline = true, bool returnsContent = false, string closureName = null)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			try
 			{
 				BuildSourceLineInfo(writer, topLevelControl);
@@ -1842,6 +1873,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildCollection(IIndentedStringBuilder writer, bool isInline, string name, XamlMemberDefinition implicitContentChild)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (isInline)
 			{
 				using (writer.BlockInvariant(name + " = "))
@@ -1881,6 +1913,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// <param name="isInInitializer">True if inside an object initialization</param>
 		private void RegisterAndBuildResources(IIndentedStringBuilder writer, XamlObjectDefinition topLevelControl, bool isInInitializer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var resourcesMember = topLevelControl.Members.FirstOrDefault(m => m.Member.Name == "Resources");
 
 			if (resourcesMember != null)
@@ -1943,6 +1976,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// <param name="isInInitializer">Whether we're within an object initializer</param>
 		private void BuildResourceDictionary(IIndentedStringBuilder writer, XamlMemberDefinition resourcesRoot, bool isInInitializer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var closingPunctuation = isInInitializer ? "," : ";";
 
 			foreach (var resource in (resourcesRoot?.Objects).Safe())
@@ -2018,6 +2052,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildMergedDictionaries(IIndentedStringBuilder writer, XamlMemberDefinition mergedDictionaries, bool isInInitializer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var propertyName = "MergedDictionaries";
 			BuildDictionaryCollection(writer, mergedDictionaries, isInInitializer, propertyName, isDict: false);
 		}
@@ -2027,6 +2062,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildThemeDictionaries(IIndentedStringBuilder writer, XamlMemberDefinition themeDictionaries, bool isInInitializer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			BuildDictionaryCollection(writer, themeDictionaries, isInInitializer, "ThemeDictionaries", isDict: true);
 		}
 
@@ -2035,6 +2071,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildDictionaryCollection(IIndentedStringBuilder writer, XamlMemberDefinition dictionaries, bool isInInitializer, string propertyName, bool isDict)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (dictionaries == null)
 			{
 				return;
@@ -2121,6 +2158,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildDictionaryFromSource(IIndentedStringBuilder writer, XamlMemberDefinition sourceDef)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var source = (sourceDef?.Value as string)?.Replace('\\', '/');
 			if (source == null)
 			{
@@ -2208,6 +2246,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildExtendedProperties(IIndentedStringBuilder outerwriter, XamlObjectDefinition objectDefinition, bool useChildTypeForNamedElement = false, bool useGenericApply = false)
 		{
+			TryAnnotateWithGeneratorSource(outerwriter);
 			var objectUid = GetObjectUid(objectDefinition);
 
 			var extendedProperties = GetExtendedProperties(objectDefinition);
@@ -2599,6 +2638,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void BuildLocalizedProperties(IIndentedStringBuilder writer, XamlObjectDefinition objectDefinition)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var objectUid = GetObjectUid(objectDefinition);
 
 			if (objectUid != null)
@@ -2618,6 +2658,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void TryValidateContentPresenterBinding(IIndentedStringBuilder writer, XamlObjectDefinition objectDefinition, XamlMemberDefinition member)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (
 				FindType(objectDefinition.Type) == _contentPresenterSymbol
 				&& member.Member.Name == "Content"
@@ -2648,6 +2689,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildUiAutomationId(IIndentedStringBuilder writer, string closureName, string uiAutomationId, XamlObjectDefinition parent)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (uiAutomationId.IsNullOrEmpty())
 			{
 				return;
@@ -2683,6 +2725,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildSetAttachedProperty(IIndentedStringBuilder writer, string closureName, XamlMemberDefinition member, string objectUid, bool isCustomMarkupExtension)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var literalValue = isCustomMarkupExtension
 					? GetCustomMarkupExtensionValue(member)
 					: BuildLiteralValue(member, owner: member, objectUid: objectUid);
@@ -2698,6 +2741,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private XamlLazyApplyBlockIIndentedStringBuilder CreateApplyBlock(IIndentedStringBuilder writer, INamedTypeSymbol appliedType, out string closureName)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			closureName = "c" + (_applyIndex++).ToString(CultureInfo.InvariantCulture);
 
 			//
@@ -2741,6 +2785,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildComplexPropertyValue(IIndentedStringBuilder writer, XamlMemberDefinition member, string prefix, string closureName = null, bool generateAssignation = true)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			Func<string, string> formatLine = format => prefix + format + (prefix.HasValue() ? ";\r\n" : "");
 
 			var bindingNode = member.Objects.FirstOrDefault(o => o.Type.Name == "Binding");
@@ -2783,6 +2828,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 			if (bindingOptions != null)
 			{
+				TryAnnotateWithGeneratorSource(writer);
 				var isAttachedProperty = IsDependencyProperty(member.Member);
 				var isBindingType = FindPropertyType(member.Member) == _dataBindingSymbol;
 
@@ -2808,7 +2854,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 			if (resourceKey != null)
 			{
-
+				TryAnnotateWithGeneratorSource(writer);
 				var directProperty = GetResourceDictionaryPropertyName(resourceKey);
 
 				if (directProperty != null)
@@ -3790,6 +3836,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildLiteralProperties(IIndentedStringBuilder writer, XamlObjectDefinition objectDefinition, string closureName = null)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var closingPunctuation = string.IsNullOrWhiteSpace(closureName) ? "," : ";";
 
 			var extendedProperties = GetExtendedProperties(objectDefinition);
@@ -4015,6 +4062,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildChild(IIndentedStringBuilder writer, XamlMemberDefinition owner, XamlObjectDefinition xamlObjectDefinition, string outerClosure = null)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var typeName = xamlObjectDefinition.Type.Name;
 			var fullTypeName = xamlObjectDefinition.Type.Name;
 
@@ -4218,6 +4266,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 		/// </summary>
 		private void TrySetParsing(IIndentedStringBuilder writer, XamlObjectDefinition objectDefinition, bool isInitializer)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			if (HasIsParsing(objectDefinition.Type))
 			{
 				writer.AppendLineInvariant("IsParsing = true");
@@ -4358,6 +4407,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private IDisposable TryGenerateDeferedLoadStrategy(IIndentedStringBuilder writer, INamedTypeSymbol targetType, XamlObjectDefinition definition)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var strategy = FindMember(definition, "DeferLoadStrategy");
 			var loadElement = FindMember(definition, "Load");
 
@@ -4489,6 +4539,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildChildThroughSubclass(IIndentedStringBuilder writer, XamlMemberDefinition contentOwner, string returnType)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			// To prevent conflicting names whenever we are working with dictionaries, subClass index is a Guid in those cases
 			var subClassPrefix = _scopeStack.Aggregate("", (val, scope) => val + scope.Name);
 
@@ -4570,6 +4621,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 		private void BuildInitializer(IIndentedStringBuilder writer, XamlObjectDefinition xamlObjectDefinition, XamlMemberDefinition owner = null)
 		{
+			TryAnnotateWithGeneratorSource(writer);
 			var initializer = xamlObjectDefinition.Members.First(m => m.Member.Name == "_Initialization");
 
 			if (IsPrimitive(xamlObjectDefinition))
@@ -4664,6 +4716,17 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 			_scopeStack.Push(new NameScope(name));
 
 			return new DisposableAction(() => _scopeStack.Pop());
+		}
+		
+		/// <summary>
+		/// If flag is set, decorate the generated code with a marker of the current method. Useful for pinpointing the source of a bug or other undesired behavior.
+		/// </summary>
+		private void TryAnnotateWithGeneratorSource(IIndentedStringBuilder writer, [CallerMemberName] string callerName = null, [CallerLineNumber] int lineNumber = 0)
+		{
+			if (_shouldAnnotateGeneratedXaml)
+			{
+				writer.Append("/*{0} L:{1}*/".InvariantCultureFormat(callerName, lineNumber));
+			}
 		}
 	}
 }
