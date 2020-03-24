@@ -778,6 +778,78 @@
 				  fullName="System.Void Windows.UI.Xaml.Controls.ScrollContentPresenter.set_TemplatedParent(Windows.UI.Xaml.DependencyObject value)"
 				  reason="macOS ScrollContentPresenter implements IDataContextProvider"/>
 
+
+
+			  <!-- AndroidX updates-->
+			  <Member
+				  fullName="Windows.UI.Xaml.Controls.VirtualizingPanelLayout/Line Windows.UI.Xaml.Controls.VirtualizingPanelLayout.CreateLine(Windows.UI.Xaml.Controls.Primitives.GeneratorDirection fillDirection, System.Int32 extentOffset, System.Int32 breadthOffset, System.Int32 availableBreadth, Android.Support.V7.Widget.RecyclerView/Recycler recycler, Android.Support.V7.Widget.RecyclerView/State state, Uno.UI.IndexPath nextVisibleItem, System.Boolean isNewGroup)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Controls.PivotAdapter..ctor(Android.Support.V4.App.FragmentManager fragmentManager, Windows.UI.Xaml.Controls.NativePivotPresenter pivot)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Controls.PivotAdapter..ctor(Android.Support.V4.App.FragmentManager fm)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObserveCreated()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObserveStart()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObservePause()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObserveResume()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObserveViewCreated()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObserveStop()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.IObservable`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.ObserveDestroyed()"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Threading.Tasks.Task`1&lt;Android.Support.V4.App.Fragment&gt; Uno.UI.IFragmentTracker.GetCurrent(System.Threading.CancellationToken ct)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushCreated(Android.Support.V4.App.Fragment fragment)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushStart(Android.Support.V4.App.Fragment fragment)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushPause(Android.Support.V4.App.Fragment fragment)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushResume(Android.Support.V4.App.Fragment fragment"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushViewCreated(Android.Support.V4.App.Fragment fragment)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushStop(Android.Support.V4.App.Fragment fragment)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushDestroyed(Android.Support.V4.App.Fragment fragment)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="Uno.UI.BaseFragment Uno.UI.Extensions.FragmentManagerExtensions.GetCurrentFragment(Android.Support.V4.App.FragmentManager fragmentManager)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="Android.Views.View Uno.UI.Extensions.RecyclerExtensions.GetViewForPosition(Android.Support.V7.Widget.RecyclerView/Recycler recycler, System.Int32 position, Android.Support.V7.Widget.RecyclerView/State state)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="Android.Graphics.Color Uno.UI.Extensions.ToolbarExtensions.GetTitleTextColor(Android.Support.V7.Widget.Toolbar toolbar)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.Controls.SlidingTabLayout.SetOnPageChangeListener(Android.Support.V4.View.ViewPager/IOnPageChangeListener listener)"
+				  reason="AndroidX update" />
+			  <Member
+				  fullName="System.Void Uno.UI.Controls.SlidingTabLayout.SetViewPager(Android.Support.V4.View.ViewPager viewPager)"
+				  reason="AndroidX update" />
 			</Methods>
 			<Properties>
 				<Member
