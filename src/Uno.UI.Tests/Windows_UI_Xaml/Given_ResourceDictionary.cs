@@ -17,6 +17,12 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 	[TestClass]
 	public class Given_ResourceDictionary
 	{
+		[TestInitialize]
+		public void Init()
+		{
+			UnitTestsApp.App.EnsureApplication();
+		}
+
 		[TestMethod]
 		public void When_Simple_Add_And_Retrieve()
 		{
@@ -349,8 +355,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Resource_In_Merged_Source_Xaml_Element()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var control = new Test_Control();
 
 			AssertEx.AssertContainsColorBrushResource(control.TestGrid.Resources, "AbominableColorBrush", Colors.Teal);
@@ -397,8 +401,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Different_Control_Instances()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var control1 = new Test_Control();
 			var control2 = new Test_Control();
 			Assert.IsTrue(control1.Resources.ContainsKey("LocalColorBrush"));
@@ -468,8 +470,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Implicit_Style_From_Code()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var control = new Test_Control();
 			Assert.IsTrue(control.Resources.ContainsKey(typeof(RadioButton)));
 			Assert.IsNotNull(control.Resources[typeof(RadioButton)] as Style);
@@ -506,8 +506,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Local_Dictionary_Intra_Reference()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var control = new Test_Control();
 			control.TestTextBlock2.DataContext = false;
 			AssertEx.AssertHasColor(control.TestTextBlock2.Foreground, Colors.LimeGreen);
@@ -516,8 +514,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Local_Lexically_Forward()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var page = new Test_Page();
 			page.TestTextBlock2.DataContext = true;
 
@@ -527,8 +523,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Direct_Local_Assignation_From_Source()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var page = new Test_Page();
 
 			AssertEx.AssertContainsColorBrushResource(page.TestStackPanel.Resources, "NotInAppResources", Colors.Cyan);
@@ -537,8 +531,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Created_From_Source_In_Codebehind()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var rd = new ResourceDictionary { Source = new Uri("ms-appx:///Uno.UI.Tests.ViewLibrary/Themes/More/Test_Dictionary_Abs.xaml") };
 			AssertEx.AssertContainsColorBrushResource(rd, "BituminousColorBrush", Colors.SlateGray);
 
@@ -552,8 +544,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Created_From_Local_Source_In_Codebehind()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var rd = new ResourceDictionary { Source = new Uri("ms-resource:///Files/App/Xaml/Test_Dictionary.xaml") };
 			AssertEx.AssertContainsColorBrushResource(rd, "SuperiorColorBrush", Colors.MediumSpringGreen);
 		}
@@ -561,8 +551,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_External_Source()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var page = new Test_Page();
 			var rp = page.TestRelativePanel;
 			var rd = rp.Resources;
@@ -572,8 +560,6 @@ namespace Uno.UI.Tests.Windows_UI_Xaml
 		[TestMethod]
 		public void When_Local_Source_Absolute()
 		{
-			var app = UnitTestsApp.App.EnsureApplication();
-
 			var page = new Test_Page();
 			var b = page.TestBorder;
 			var rd = b.Resources;
