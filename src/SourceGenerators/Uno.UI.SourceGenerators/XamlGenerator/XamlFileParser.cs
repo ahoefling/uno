@@ -79,7 +79,10 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 			shouldCreateIgnorable |= conditionals.ExcludedConditionals.Count > 0;
 
-			if (ignorables == null && !shouldCreateIgnorable)
+			var adjusted = File.ReadAllText(file, Encoding.UTF8);
+			var hasxBind = adjusted.Contains("{x:Bind");
+
+			if (ignorables == null && !shouldCreateIgnorable && !hasxBind)
 			{
 				// No need to modify file
 				return XmlReader.Create(file);
@@ -96,7 +99,6 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 				.ToArray();
 			var newIgnoredFlat = newIgnored.JoinBy(" ");
 
-			string adjusted;
 			if (ignorables != null)
 			{
 				ignorables.Value = newIgnoredFlat;
@@ -105,8 +107,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 				// change the namespaces using textreplace, to keep the formatting and have proper
 				// line/position reporting.
-				adjusted = File
-					.ReadAllText(file, Encoding.UTF8)
+				adjusted = adjusted
 					.Replace(
 						"Ignorable=\"{0}\"".InvariantCultureFormat(originalIgnorables),
 						"Ignorable=\"{0}\"".InvariantCultureFormat(ignorables.Value)
@@ -137,7 +138,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 
 				var replacement = "{0}{1} {2}:Ignorable=\"{3}\"".InvariantCultureFormat(targetLine, mcString, mcName, newIgnoredFlat);
 				adjusted = ReplaceFirst(
-						File.ReadAllText(file, Encoding.UTF8),
+						adjusted,
 						targetLine,
 						replacement
 					)
@@ -182,7 +183,7 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 					);
 			}
 
-			if (adjusted.Contains("{x:Bind"))
+			if (hasxBind)
 			{
 				// Apply replacements to avoid having issues with the XAML parser which does not
 				// support quotes in positional markup extensions parameters.
