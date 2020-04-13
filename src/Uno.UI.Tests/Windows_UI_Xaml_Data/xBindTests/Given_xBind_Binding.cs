@@ -37,7 +37,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Binding_StateTrigger();
 
-			Assert.IsNull(SUT._StringField.Text);
+			Assert.AreEqual(string.Empty, SUT._StringField.Text);
 
 			SUT.ForceLoaded();
 
@@ -575,7 +575,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 
 			var inner = SUT.root.FindName("inner") as Windows.UI.Xaml.Controls.TextBlock;
 
-			Assert.IsNull(inner.Text);
+			Assert.AreEqual(string.Empty, inner.Text);
 
 			SUT.root.Content = "hello!";
 
