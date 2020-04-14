@@ -718,6 +718,23 @@
 		</IgnoreSet>
 
 		<IgnoreSet baseVersion="2.1.37">
+			<Types>
+			<!-- Styles overhaul -->
+				<Member
+					fullName="Uno.UI.GlobalStaticResources"
+					reason="Resources defined in XAML are no longer converted to public properties on GlobalStaticResources. The type itself is still present." />
+				<Member
+					fullName="Windows.UI.Xaml.GenericStyles"
+					reason="Removed obsolete non-standard type (Styles are now all defined in XAML)." />
+				<Member
+					fullName="Windows.UI.Xaml.Style`1"
+					reason="Removed unused non-standard generic version of Style." />
+				<Member
+					fullName="Uno.UI.Controls.BindableSearchView"
+					reason="Removed unused Uno-only legacy control." />
+			<!-- ^^ Styles overhaul -->
+			</Types>
+
 			<Methods>
 				<Member
 				  fullName="System.Void Windows.UI.Xaml.Controls.DatePickerSelectedValueChangedEventArgs..ctor()"
@@ -778,12 +795,71 @@
 				  fullName="System.Void Windows.UI.Xaml.Controls.ScrollContentPresenter.set_TemplatedParent(Windows.UI.Xaml.DependencyObject value)"
 				  reason="macOS ScrollContentPresenter implements IDataContextProvider"/>
 
+			<!-- Styles overhaul -->
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.FrameworkElement.OnStyleChanged(Windows.UI.Xaml.Style oldStyle, Windows.UI.Xaml.Style newStyle)"
+				  reason="Removed non-standard protected method"/>
+			  <Member
+				  fullName="System.Func`2&lt;System.String,System.Object&gt; Windows.UI.Xaml.ResourceDictionary.get_DefaultResolver()"
+				  reason="Removed non-standard property that's no longer used by Xaml-generated code with new resources handling"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.ResourceDictionary.set_DefaultResolver(System.Func`2&lt;System.String,System.Object&gt; value)"
+				  reason="Removed non-standard property that's no longer used by Xaml-generated code with new resources handling"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Style..ctor(System.Type targetType, Windows.UI.Xaml.Style basedOn)"
+				  reason="Removed non-standard Style constructor"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Style.ApplyTo(Windows.UI.Xaml.DependencyObject o)"
+				  reason="Made non-standard method internal, shouldn't normally be called from consumer code"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Style.RegisterDefaultStyleForType(System.Type type, Windows.UI.Xaml.Style style)"
+				  reason="Removed unused overload. This is public to be callable from Xaml-generated code, but should never be called by consumer code."/>
+			  <Member
+				  fullName="Windows.UI.Xaml.Style Windows.UI.Xaml.Style.DefaultStyleForType(System.Type type)"
+				  reason="Made non-standard method internal"/>
+			  <Member
+				  fullName="Windows.UI.Xaml.Style Windows.UI.Xaml.Documents.TextElement.get_Style()"
+				  reason="Removed unused non-standard property"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Documents.TextElement.set_Style(Windows.UI.Xaml.Style value)"
+				  reason="Removed unused non-standard property"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Documents.TextElement.OnStyleChanged()"
+				  reason="Removed unused non-standard property"/>
+			  <Member
+				  fullName="Windows.UI.Xaml.Style Windows.UI.Xaml.Controls.NativePage.get_Style()"
+				  reason="Removed unused non-standard property"/>
+			  <Member
+				  fullName="System.Void Windows.UI.Xaml.Controls.NativePage.set_Style(Windows.UI.Xaml.Style value)"
+				  reason="Removed unused non-standard property"/>
+			<!-- ^^ Styles overhaul -->
+
 			</Methods>
 			<Properties>
 				<Member
 					fullName="Windows.UI.Xaml.Style Uno.UI.GlobalStaticResources::__ImplicitStyle_Windows_UI_Xaml_Controls_DatePickerSelector()"
 					reason="Style removed from monoandroid (xamarin:Style with only ios:Setter)" />
+
+					
+			<!-- Styles overhaul -->
+			  <Member
+				  fullName="System.Func`2&lt;System.String,System.Object&gt; Windows.UI.Xaml.ResourceDictionary::DefaultResolver()"
+				  reason="Removed non-standard property that's no longer used by Xaml-generated code with new resources handling"/>
+			  <Member
+				  fullName="Windows.UI.Xaml.Style Windows.UI.Xaml.Documents.TextElement::Style()"
+				  reason="Removed unused non-standard property"/>
+			  <Member
+				  fullName="Windows.UI.Xaml.Style Windows.UI.Xaml.Controls.NativePage::Style()"
+				  reason="Removed unused non-standard property"/>
+			<!-- ^^ Styles overhaul -->
 			</Properties>
+			<Fields>
+			<!-- Styles overhaul -->
+			  <Member
+				  fullName="Windows.UI.Xaml.DependencyProperty Windows.UI.Xaml.Documents.TextElement::StyleProperty"
+				  reason="Removed unused non-standard DependencyProperty"/>
+			<!-- ^^ Styles overhaul -->
+			</Fields>
 		</IgnoreSet>
 	</IgnoreSets>
 </DiffIgnore>
