@@ -824,7 +824,7 @@
 				  fullName="System.Void Uno.UI.IFragmentTracker.PushPause(Android.Support.V4.App.Fragment fragment)"
 				  reason="AndroidX update" />
 			  <Member
-				  fullName="System.Void Uno.UI.IFragmentTracker.PushResume(Android.Support.V4.App.Fragment fragment"
+				  fullName="System.Void Uno.UI.IFragmentTracker.PushResume(Android.Support.V4.App.Fragment fragment)"
 				  reason="AndroidX update" />
 			  <Member
 				  fullName="System.Void Uno.UI.IFragmentTracker.PushViewCreated(Android.Support.V4.App.Fragment fragment)"
