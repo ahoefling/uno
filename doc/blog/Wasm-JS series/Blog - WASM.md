@@ -1,0 +1,672 @@
+# Embedding Existing Javascript Components Into Uno-WASM
+
+Uno fully embrace HTML5 as its display backend on its WASM target. Because of that, it's possible to integrate to almost any existing JavaScript library to extend the behavior of an app.
+
+This article will first review how Uno interoperates with HTML5, following by an integration of a simple JavaScript-based syntax highlighter in a Uno project. Another article will go further and deeper in the dotnet/JavaScript interop.
+
+# Uno Wasm Bootstrap - where it starts
+
+Behind a Uno-Wasm project, there's a component called [`Uno.Wasm.Bootstrap`](https://github.com/unoplatform/Uno.Wasm.Bootstrap). It contains the tooling required to build, package, deploy and run a _.NET_ project using _Mono_ in a web browser using _WebAssembly_. It's automatically include in any
+
+## Embedding assets
+
+In the HTML world, everything running in the browser must be downloaded from a server. This is called assets. To integrate existing javascript frameworks, you can either download them directly from the Internet (usually from a CDN service) or embed them with your app.
+
+Uno Wasm Bootstrap can automatically embed any asset and deploy them with the app. Some of them (CSS & JavaScript) could also be loaded with the app. Here's how to declare them in a _Uno Wasm_ project:
+
+1. **JavaScript files** should be in `WasmScripts`  folder: they will be copied to output folder and loaded automatically by the bootstrapper when the page loads. **They must be marked as `EmbeddedResources`**.
+
+2. **CSS Style files** should be in the `WasmCSS` folder: they will be copied to output folder and referenced in the _html head_ of the application. **They must be marked as `EmbeddedResources`**.
+
+3. **Asset files** should be marked as `Content` in the app. The file will be copied to output folder and will preserve the same relative path.
+
+4. Alternatively, **any kind of asset files** can be placed directly in the `wwwroot` folder as you would do with any standard _aspnet core_ project. They will be deployed with the app, but the application code will have the responsibility to fetch and use them.
+
+   > **Is it an Aspnet Core project?**
+   > Nope. Some of the deployment features, like the `wwwroot` folder, the VisualStudio integration for running and debugging is reused as an Aspnet Core project, but that's it. The C# code you put in such project will run in the browser, using the mono-wasm runtime. Right now there's no _server side_ component in such project.
+
+## Uno-Wasm controls are actually HTML5 elements
+
+The [philosophy of Uno](https://platform.uno/docs/articles/concepts/overview/philosophy-of-uno.html) is to rely on native platforms as much as possible. In the context of a browser, that's the HTML5 DOM. It means each time you're creating an instance of a class deriving from `UIElement`, you're actually creating a HTML element.
+
+That aslo means you can control how this element is created.  By default is a `<div>`, but you can change this directly in the constructor by setting the `htmlTag` parameter to whatever required. Example:
+
+``` csharp
+// MyControl constructors
+public MyControl() : base() // will create a "div" HTML element
+public MyControl() : base("input") // Will create an "input" HTML element
+public MyControl() : base(htmlTag: "span") // Will create a "span" HTML element
+```
+
+Once created, it's possible to interact directly with this element by calling helper methods supplied by Uno on base classes. Obviously those methods are only available when targeting the _Wasm_ platform.
+
+Helper methods:
+
+* The method `base.SetStyle()` can be used to set a CSS Style on the html element. Example:
+
+  ``` csharp
+  // Setting only one CSS style
+  SetStyle("text-shadow", "2px 2px red");
+  
+  // Setting many CSS styles at once using C# tuples
+  SetStyle(("text-shadow", "2px 2px blue"), ("color", "var(--app-bg-color)"));
+  ```
+
+* The method `base.ResetStyle()` can be used to set CSS styles to their default values. Example:
+
+  ``` csharp
+  // Reset text-shadow style to its default value
+  ResetStyle("text-shadow");
+  
+  // Reset both text-shadow and color to their default values
+  ResetStyle("text-shadow", "color");
+  ```
+
+* The methods `base.SetAttribute()` and `base.RemoteAttribute()` can be used to set HTML Attributes on the html element. Example:
+
+  ``` csharp
+  // Set the "href" attribute of an <a> element
+  SetAttribute("href", "#section2");
+  
+  // Set many attributes at once
+  SetAttribute(("target", "_blank"), ("referrerpolicy", "no-referrer"));
+  
+  // Remove attribute from DOM element
+  RemoveAttribute("href");
+  ```
+
+* The method `base.SetHtmlContent()` could be used to set arbitrary HTML content as child of the control.
+
+  ``` csharp
+  SetHtmlContent("<h2>Welcome on Uno Platform!</h2>");
+  ```
+
+  > Note: don't use this unless your control doesn't include any _managed_ children, or you'll get unexpected results.
+
+* Finally, it's possible to invoke an arbitrary bunch of JavaScript code by using the _static_ method `WebAssembleRuntime.InvokeJS()`. Once there, it directly in the browser, so it's possible to make almost anything. It's possible to use the `HtmlId` property of the element to locate it in JavaScript code.
+  If the control has been loaded (after de `Loaded` router event), it will be available directly by calling the JavaScript `document.getElementById()`. But it's also possible to access it before using the  `Uno.UI.WindowManager.current.getView(<HtmlId>)` function in JavaScript.
+
+To illustrate how it's possible to use this in a real application, let's create one to integrate a pretty simple _syntax highlighter_ named [`PrismJS`](https://prismjs.com/).
+
+# Sample - Integration of PrismJS in a project
+
+## 0. Before starting
+
+📝 To reproduce the code in this article, you must [prepare your development environment](https://platform.uno/docs/articles/get-started.html).
+
+## 1. Creating the projects
+
+🎯 This section is very similar to the [_Getting Started_ in the official documentation](https://platform.uno/docs/articles/getting-started-tutorial-1.html).
+
+1. Start **VisualStudio 2019**
+2. Click `Create a new project`
+   ![image-20200325113112235](image-20200325113112235.png)
+3. **Search for "Uno"** and pick `Cross-Platform App (Uno Platform)`. Pay attention to select the `App`, not the `Library` project type.
+   ![image-20200325113532758](image-20200325113532758.png)
+   Select it and click `Next`.
+4. Give a project name and folder as you wish. It will be named `PrismJsDemo` here.
+5. Click `Create` button.
+6. Delete the `.Droid`, `.iOS` and `.UWP` projects.
+   
+   > Note: it's definitely possible to build multi-platforms controls, but it's the goal of another article. So removing them will avoid misleading compilation errors for now.
+7. Right-click on the solution and pick `Manage NuGet Packages for Solution...`
+   ![image-20200325114155796](image-20200325114155796.png)
+8. Update to latest version of `Uno` dependencies. **DO NOT UPDATE THE `Microsoft.Extensions.Logging` dependencies** to latest versions.
+9. Press `CTRL-F5`. App should compile and start a browsing showing this:
+   ![image-20200325114609689](image-20200325114609689.png)
+   Note: if it's the first time you're using _Uno_, it could take some times to download the latest Mono-Wasm SDK into a _temp_ folder.
+
+## 2. Create a control in managed code
+
+🎯 In this section, a control named `PrismJsView` is created in code and used in the XAML page (`MainPage.xaml`) to present it.
+
+1. From the `.Shared` project, create a new class file named `PrismJsView.cs`. and copy the following code:
+
+   ```csharp
+   using System;
+   using System.Collections.Generic;
+   using System.Text;
+   using Windows.UI.Xaml;
+   using Windows.UI.Xaml.Controls;
+   using Windows.UI.Xaml.Markup;
+   using Uno.Foundation;
+   
+   namespace PrismJsDemo.Shared
+   {
+       [ContentProperty(Name = "Code")]
+       public class PrismJsView : Control
+       {
+           // *************************
+           // * Dependency Properties *
+           // *************************
+   
+           public static readonly DependencyProperty CodeProperty = DependencyProperty.Register(
+               "Code",
+               typeof(string),
+               typeof(PrismJsView),
+               new PropertyMetadata(default(string), CodeChanged));
+   
+           public string Code
+           {
+               get => (string)GetValue(CodeProperty);
+               set => SetValue(CodeProperty, value);
+           }
+   
+           public static readonly DependencyProperty LanguageProperty = DependencyProperty.Register(
+               "Language",
+               typeof(string),
+               typeof(PrismJsView),
+               new PropertyMetadata(default(string), LanguageChanged));
+   
+           public string Language
+           {
+               get => (string)GetValue(LanguageProperty);
+               set => SetValue(LanguageProperty, value);
+           }
+   
+           // ***************
+           // * Constructor *
+           // ***************
+   
+           public PrismJsView() : base("code") // PrismJS requires a <code> element
+           {
+               // Any HTML initialization here
+           }
+   
+           // ******************************
+           // * Property Changed Callbacks *
+           // ******************************
+   
+           private static void CodeChanged(DependencyObject dependencyobject, DependencyPropertyChangedEventArgs args)
+           {
+               // TODO: generate HTML using PrismJS here
+           }
+   
+           private static void LanguageChanged(DependencyObject dependencyobject, DependencyPropertyChangedEventArgs args)
+           {
+               // TODO: generate HTML using PrismJS here
+           }
+       }
+   }
+   
+   ```
+
+   It's basically a control, having 2 properties, one code `Code` and another one for `Language`.
+
+2. Change the `MainPage.xaml` file to the following content:
+
+   ``` xaml
+   <Page
+       x:Class="PrismJsDemo.MainPage"
+       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:local="using:PrismJsDemo"
+       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+       mc:Ignorable="d">
+   
+       <Grid Padding="10">
+           <Grid.RowDefinitions>
+               <RowDefinition Height="Auto" />
+               <RowDefinition Height="*" />
+               <RowDefinition Height="*" />
+           </Grid.RowDefinitions>
+   
+           <TextBox x:Name="lang" Text="csharp" Grid.Row="0" />
+           <TextBox x:Name="code" Text="var x = 3;&#xA;var y = 4;" AcceptsReturn="True" VerticalAlignment="Stretch" Grid.Row="1" />
+   
+           <Border BorderBrush="Blue" BorderThickness="2" Background="LightBlue" Padding="10" Grid.Row="2">
+               <local:PrismJsView Code="{Binding Text, ElementName=code}" Language="{Binding Text, ElementName=lang}"/>
+           </Border>
+       </Grid>
+   </Page>
+   ```
+   
+3. Press CTRL-F5.  You should see this:
+   ![image-20200414144707425](image-20200414144707425.png)
+
+4. Press F12 (on Chrome, may vary on other browsers).
+
+5. Click on the first button and select the light-blue part in the app.
+   ![image-20200325132528604](image-20200325132528604.png)
+
+6. It will bring the DOM explorer to a `xamltype=Windows.UI.Xaml.Controls.Border` node. The `PrismJsView` should be right below after opening it.
+   
+   ![Html Explorer](image-20200325132859849.png)
+   The `xamltype="PrismJsDemo.Shared.PrismJsView"`) control is there!
+
+📝 The project is now ready to integrate PrismJS.
+
+## 3. Add JavaScript & CSS files
+
+🎯 In this section, PrismJS files are download from its website and put them as assets in the app.
+
+1. Go on this link: https://prismjs.com/download.html
+
+2. Choose desired Themes & Languages (`Default` theme + all languages is used for the demo)
+
+3. Press the `DOWNLOAD JS` button and put the `prism.js` file in the `WasmScripts` folder of the `.Wasm` project.
+
+   > Putting the `.js` file in this folder will instruct _Uno Wasm Bootstrap_ to automatically load the javascript file during startup.
+
+4. Press the `DOWNLOAD CSS` button and put the `prism.css` file in the `WasmCSS` folder of the `.Wasm` project.
+
+   > Putting the `.css` file in this folder will instruct _Uno Wasm Bootstrap_ to automatically inject a `<link>` html instruction in the resulting `index.html` file to load it by the browser.
+
+5. Right-click on the `.Wasm` project node in the solution explorer, and pick `Edit Project File` (it can also work by just selecting the project, if the `Preview Selected Item` option is activated).
+
+6. Insert this in the appropriate `<ItemGroup>`:
+
+   ```xml
+   <ItemGroup>
+     <EmbeddedResource Include="WasmCSS\Fonts.css" />
+     <EmbeddedResource Include="WasmCSS\prism.css" /> <!-- This is new -->
+     <EmbeddedResource Include="WasmScripts\AppManifest.js" />
+     <EmbeddedResource Include="WasmScripts\prism.js" /> <!-- This one too -->
+   </ItemGroup>
+   ```
+
+   > For _Uno Wasm Bootstrap_ to take those files automatically and load them with the application, they **NEED** to be put as embedded resources. A future version of Uno may remove this requirement.
+
+7. Compile & run
+
+8. Once loaded, press F12 and go in the `Sources` tab. Both `prism.js` & `prism.css` files should be loaded this time.
+   ![image-20200414143931953](image-20200414143931953.png)
+
+## 4. Integrate!
+
+🎯 In this section, PrismJS is used from the app.
+
+1. First, there's a requirement for _PrismJS_ to set the  `white-space` style at a specific value, as [documented here](https://github.com/PrismJS/prism/issues/1237#issuecomment-369846817). An easy way to do this is to set in directly in the constructor like this:
+
+   ``` csharp
+   public PrismJsView() : base("code") // PrismJS requires a <code> element
+   {
+       // This is required to set to <code> style for PrismJS to works well
+       // https://github.com/PrismJS/prism/issues/1237#issuecomment-369846817
+       SetStyle("white-space", "pre-wrap");
+   }
+   ```
+
+2. Now, we need to create an `UpdateDisplay()` method, used to generate HTML each time there's a new version to update. Here's the code for the method to add in the `PrismJsView` class:
+
+   ``` csharp
+   private void UpdateDisplay(string oldLanguage = null, string newLanguage = null)
+   {
+       string javascript = $@"
+           (function(){{
+               // Prepare Prism parameters
+               const code = ""{WebAssemblyRuntime.EscapeJs(Code)}"";
+               const oldLanguageCss = ""language-{WebAssemblyRuntime.EscapeJs(oldLanguage)}"";
+               const newLanguageCss = ""language-{WebAssemblyRuntime.EscapeJs(newLanguage)}"";
+               const language = ""{WebAssemblyRuntime.EscapeJs(newLanguage ?? Language)}"";
+   
+               // Process code to get highlighted HTML
+               const prism = window.Prism;
+               let html = code;
+               if(prism.languages[language]) {{
+                   // When the specified language is supported by PrismJS...
+                   html = prism.highlight(code, prism.languages[language], language);
+               }}
+   
+               // Get HTML element
+               const element = document.getElementById(""{HtmlId}"");
+               if(!element) return; // Not in DOM yet
+   
+               // Display result
+               element.innerHTML = html;
+   
+               // Set CSS classes, when required
+               if(oldLanguageCss) {{
+                   element.classList.remove(oldLanguageCss);
+               }}
+               if(newLanguageCss) {{
+                   element.classList.add(newLanguageCss);
+               }}
+           }})();";
+   
+       WebAssemblyRuntime.InvokeJS(javascript);
+   }
+   ```
+
+3. Change `CodeChanged()` and `LanguageChanged()` to call the new `UpdateDisplay()` method:
+
+   ``` csharp
+   private static void CodeChanged(DependencyObject dependencyobject, DependencyPropertyChangedEventArgs args)
+   {
+       (dependencyobject as PrismJsView)?.UpdateDisplay();
+   }
+   
+   private static void LanguageChanged(DependencyObject dependencyobject, DependencyPropertyChangedEventArgs args)
+   {
+       (dependencyobject as PrismJsView)?.UpdateDisplay(args.OldValue as string, args.NewValue as string);
+   }
+   ```
+
+4. We also need to update the result when the control is loaded in the DOM. So we need to change the constructor again like this:
+
+   ``` csharp
+   public PrismJsView() : base("code") // PrismJS requires a <code> element
+   {
+       // This is required to set to <code> style for PrismJS to works well
+       // https://github.com/PrismJS/prism/issues/1237#issuecomment-369846817
+       SetStyle("white-space", "pre-wrap");
+   
+       // Update the display when the element is loaded in the DOM
+       Loaded += (snd, evt) => UpdateDisplay(newLanguage: Language);
+   }
+   ```
+
+5. Compile & run.  It should work like this:
+   ![image-20200415135422628](image-20200415135422628.png)
+
+## 🔬 Going further
+
+That's a very simple integration because there's no _callback_ from HTML to managed code and _PrismJS_ is a self-contained framework.
+
+Few improvements could be done to make the code more _production ready_:
+
+* **Make the control multi-platform**. The simple way would be to use a WebView on other platforms: that way the exact same text-rendering framework would be used everywhere. Right now this code won't compile on other targets.
+* **Create script files instead of generating dynamic javascript**. That would have the advantage of improving performance and increase the ability to debug it. Few projects are also using TypeScript to generate javascript. This approach is done by Uno itself for the `Uno.UI.Wasm` project: https://github.com/unoplatform/uno/tree/master/src/Uno.UI.Wasm.
+* **Support more PrismJS features**. There's many [_plugins_ to PrismJS](https://prismjs.com/#plugins) you can play with. Most of them are very easy to implement.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Article 2 - Callback to app from JavaScript
+
+In the previous article, a simple _syntax highlighter_ were used to enhance the display of text in HTML. But it's not enough for most apps: it's often required for JavaScript components to _call back_ to the application. The easiest way to do that in Uno-Wasm is by using [_DOM Events_](https://developer.mozilla.org/docs/Web/Guide/Events/Creating_and_triggering_events). Let's create an application illustrating how to use them. Application using Uno can [consume DOM Events and CustomEvents](https://platform.uno/docs/articles/wasm-custom-events.html) very easily.
+
+# Sample 2 - Integration of Flatpickr
+
+📝 [Flatpickr](https://flatpickr.js.org/) is a lightweight, self-contained _Date & Time Picker_. It's an easy way to explore how a JavaScript can call-back to _managed application code_. In this case, it will be used to report when the picker is opened and the picked date & time.
+
+## 1. Create the solution in VisualStudio
+
+📝 This part is very short because it's similar to previous article:
+
+1. Create a `Cross-Platform App (Uno Platform)` project and name it `FlatpickrDemo`.
+2. Remove `.Droid`, `.iOS` & `.UWP` projects from solution.
+3. Update to latest _stable_ version of `Uno.*` dependencies.
+
+## 2. Inject Flatpickr from CDN
+
+🎯 This section is using a CDN to get _Flatpickr_ instead of hosting the javascript directly in the application. It's not always the best solution - it creates a dependency on the Internet availability and any change made server-side could break the application. But the goal here is to demonstrate the flexibility of Uno, not how to build the best application architecture.
+
+An easy way to achieve this is to add _JavaScript_ code to load the CSS file directly from the CDN. The _JavaScript_ portion of _Flatpickr_ will be lazy-loaded with the control later.
+
+1. Create a new _JavaScript_ `flatpickrLoader.js` in the `WasmScripts` folder of the `.Shared` project:
+
+   ``` javascript
+   (function () {
+       const head = document.getElementsByTagName("head")[0];
+
+       // Load Flatpickr CSS from CDN
+       const link = document.createElement("link");
+       link.rel = "stylesheet";
+       link.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
+       head.appendChild(link);
+})();
+   ```
+   
+   This will load the _Flatpickr_ assets directly from CDN. You can also download assets and put them in the `WasmScripts` and `WasmCSS` folder, that this will be enough for the demo here.
+   
+2. Set the file as `Embedded Resource`:
+
+   ``` xml
+   <ItemGroup>
+     <EmbeddedResource Include="WasmCSS\Fonts.css" />
+     <EmbeddedResource Include="WasmScripts\AppManifest.js" />
+     <EmbeddedResource Include="WasmScripts\flatpickrLoaded.js" /> <!-- add this line -->
+   </ItemGroup>
+   ```
+
+## 3. Uno controls & XAML
+
+🎯 This section is creating a control used in the XAML. It will activate `Flatpickr` on the control's `<input>` element.
+
+1. Create a `FlatpickrView.cs` class in the `.Shared` project like this:
+
+   ``` csharp
+   using System;
+   using System.Collections.Generic;
+   using System.Globalization;
+   using System.Text;
+   using Windows.UI.Xaml;
+   using Uno.Foundation;
+   using Uno.Extensions;
+   
+   namespace FlatpickrDemo.Shared
+   {
+       public class FlatpickrView : FrameworkElement
+       {
+           // *************************
+           // * Dependency Properties *
+           // *************************
+   
+           public static readonly DependencyProperty SelectedDateTimeProperty = DependencyProperty.Register(
+               "SelectedDateTime", typeof(DateTimeOffset?), typeof(FlatpickrView), new PropertyMetadata(default(DateTimeOffset?)));
+   
+           public DateTimeOffset? SelectedDateTime
+           {
+               get => (DateTimeOffset) GetValue(SelectedDateTimeProperty);
+               set => SetValue(SelectedDateTimeProperty, value);
+           }
+   
+           public static readonly DependencyProperty IsPickerOpenedProperty = DependencyProperty.Register(
+               "IsPickerOpened", typeof(bool), typeof(FlatpickrView), new PropertyMetadata(false));
+   
+           public bool IsPickerOpened
+           {
+               get { return (bool)GetValue(IsPickerOpenedProperty); }
+               set { SetValue(IsPickerOpenedProperty, value); }
+           }
+   
+           // ***************
+           // * Constructor *
+           // ***************
+   
+           public FlatpickrView() : base("input") // Flatpickr requires an <input> HTML element
+           {
+               // XAML behavior: a non-null background is required on an element to be "visible to pointers".
+               // Uno reproduces this behavior, so we must set it here even if we're not using the background.
+               // Not doing this will lead to a `pointer-events: none` CSS style on the control.
+               Background = SolidColorBrushHelper.Transparent;
+   
+               // When the control is loaded into DOM, we activate Flatpickr on it.
+               Loaded += OnLoaded;
+           }
+   
+           // ******************
+           // * Event Handlers *
+           // ******************
+   
+           private void OnLoaded(object sender, RoutedEventArgs e)
+           {
+               // For demo purposes, Flatpickr is loaded directly from CDN.
+               // Uno uses AMD module loading, so you must give a callback when the resource is loaded.
+               var javascript = $@"require([""https://cdn.jsdelivr.net/npm/flatpickr""], f => f(document.getElementById(""{HtmlId}"")));";
+   
+               WebAssemblyRuntime.InvokeJS(javascript);
+           }
+       }
+   }
+   
+   ```
+
+   
+
+2. Change the `MainPage.xaml` in the `.Shared` project like this:
+
+   ``` xml
+   <Page
+       x:Class="FlatpickrDemo.MainPage"
+       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:local="using:FlatpickrDemo"
+       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+       mc:Ignorable="d">
+   
+       <StackPanel Spacing="10" Padding="20">
+   		<TextBlock FontSize="15">
+   			Is Picker opened: <Run FontSize="20" FontWeight="Bold" Text="{Binding IsPickerOpened, ElementName=picker}" />
+   			<LineBreak />Picked Date/Time: <Run FontSize="20" FontWeight="Bold" Text="{Binding SelectedDateTime, ElementName=picker}" />
+   		</TextBlock>
+   		<TextBlock FontSize="20">Flatpickr control:</TextBlock>
+   		<local:FlatpickrView Height="20" Width="300"  x:Name="picker" HorizontalAlignment="Left" />
+   	</StackPanel>
+   </Page>
+   ```
+
+3. After pressing CTRL-F5, after clicking on the `<input>` rectangle, this should appear:
+   ![image-20200415144159362](image-20200415144159362.png)
+
+📝 Almost there, still nedd to _call back_ to application.
+
+## 4. Add a way to _callback_ managed code from JavaScript
+
+🎯 This section will use `CustomEvent` to route Flatpickr's events to managed code.
+
+1. Register event handlers for 2 custom events: `DateChanged` and `OpenedStateChanged`. To achieve this, put this code **at the end of the `FlatpickrView` constructor:
+
+   ``` csharp
+   // Register event handler for custom events from the DOM
+   this.RegisterHtmlCustomEventHandler("DateChanged", OnDateChanged, isDetailJson: false);
+   this.RegisterHtmlCustomEventHandler("OpenedStateChanged", OnOpenedStateChanged, isDetailJson: false);
+   ```
+
+2. Add the implementations for the 2 handles in the class:
+
+   ``` csharp
+   private void OnDateChanged(object sender, HtmlCustomEventArgs e)
+   {
+       if(DateTimeOffset.TryParse(e.Detail, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeLocal, out var dto))
+       {
+           SelectedDateTime = dto;
+       }
+   }
+   
+   private void OnOpenedStateChanged(object sender, HtmlCustomEventArgs e)
+   {
+       switch(e.Detail)
+       {
+           case "open":
+               IsPickerOpened = true;
+               break;
+           case "closed":
+               IsPickerOpened = false;
+               break;
+       }
+   }
+   ```
+
+3. Change the initialization of `Flatpickr` in injected JavaScript to raise events. Change the implementation of the `OnLoaded` method for this instead:
+
+   ``` csharp
+   private void OnLoaded(object sender, RoutedEventArgs e)
+   {
+       // For demo purposes, Flatpickr is loaded directly from CDN.
+       // Uno uses AMD module loading, so you must give a callback when the resource is loaded.
+       var javascript = $@"require([""https://cdn.jsdelivr.net/npm/flatpickr""], f => {{
+               // Get HTML <input> element
+               const element = document.getElementById(""{HtmlId}"");
+   
+               // Route Flatpickr events following Uno's documentation
+               // https://platform.uno/docs/articles/wasm-custom-events.html
+               const options = {{
+                       onChange: (dates, str) => element.dispatchEvent(new CustomEvent(""DateChanged"", {{detail: str}})),
+                       onOpen: () => element.dispatchEvent(new CustomEvent(""OpenedStateChanged"", {{detail: ""open""}})),
+                       onClose: () => element.dispatchEvent(new CustomEvent(""OpenedStateChanged"", {{detail: ""closed""}}))
+                   }};
+   
+               // Instanciate Flatpickr on the element
+               f(element, options);
+           }});";
+   
+       WebAssemblyRuntime.InvokeJS(javascript);
+   }
+   ```
+
+4. Compile & Run. Here's the result:
+   ![](flatpickr-final.gif)
+
+## 🔬 Going further
+
+This article illustrate how to integrate external assets (javascript & css files) and how to leverage JavaScript's `CustomEvent` in a Uno application.
+
+More steps could be done to make the code more _production ready_:
+
+* **Make the control multi-platform**. Many DateTime pickers exists on all platforms. It should be easy on other platforms to connect the same control to another greate Date picker native to the platform - no need to embed a WebView for this on other platforms.
+* **Create script files instead of generating dynamic javascript**. As in previous article, this would have the advantage of improving performance and increase the ability to debug it.
+* **Support more Flatpickr features**. There's a [lot of features in Flatpickr](https://flatpickr.js.org/examples/) you can leverage to make a perfect versatile control.
+
+
+
+
+
+
+
+
+
+
+
+# Article 3 - Tooling
+
+## TypeScript in Uno-WASM
+
+### TypeScript
+
+If you prefer to use TypeScript instead of Javascript, you can set it up to output files in the `WasmScripts` folder. Many projects are doing this, the technique won't be covered in this article.
+
+Here's some projects doing this:
+
+* [Uno Calculator](https://github.com/unoplatform/calculator/tree/uno/src/Calculator.Wasm) - port of Windows Calculator.  Uses TypeScriptfor analytics integration.
+* [Uno Playground](https://github.com/unoplatform/Uno.Playground/tree/master/src/Uno.Playground.WASM/ts). Uses TypeScript for analytics and fragment navigation.
+* [Uno Lottie integration](https://github.com/unoplatform/uno/tree/master/src/AddIns/Uno.UI.Lottie). Uses TypeScript to communicate with `lottie.js` component.
+
+
+
+TODO - TODO - TODO
+
+- configuration file
+- modules
+- async & promises
+
+## Working with NodeJS and package manager
+
+## Using modules
+
+## Dom properties
+
+You can see some of the XAML properties directely in the DOM explorer...
+
+TODO - TODO - TODO - TODO - TODO - TODO - TODO - TODO - TODO - TODO 
+
+```csharp
+Uno.UI.FeatureConfiguration.UIElement.AssignDOMXamlProperties = true;
+```
+
+# Advanced stuff
+
+## How to layout HTML elements
+
+## How to deploy Wasm applications
+
+- As a aspnet core
+- As a PWA
