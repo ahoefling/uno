@@ -10,7 +10,7 @@ Behind a Uno-Wasm project, there's a component called [`Uno.Wasm.Bootstrap`](htt
 
 ## Embedding assets
 
-In the HTML world, everything running in the browser must be downloaded from a server. This is called assets. To integrate existing javascript frameworks, you can either download them directly from the Internet (usually from a CDN service) or embed them with your app.
+In the HTML world, everything running in the browser are assets that must be downloaded from a server. To integrate existing JavaScript frameworks, you can either download those directly from the Internet (usually from a CDN service) or embed them with your app.
 
 The Uno Bootstrapper can automatically embed any asset and deploy them with the app. Some of them (CSS & JavaScript) can also be loaded with the app. Here's how to declare them in a _Uno Wasm_ project:
 
