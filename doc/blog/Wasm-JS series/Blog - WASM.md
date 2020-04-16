@@ -112,9 +112,9 @@ To illustrate how it is possible to use this in a real application, let's create
 7. Right-click on the solution and pick `Manage NuGet Packages for Solution...`
    ![image-20200325114155796](image-20200325114155796.png)
 8. Update to latest version of `Uno` dependencies. **DO NOT UPDATE THE `Microsoft.Extensions.Logging` dependencies** to latest versions.
-9. Press `CTRL-F5`. App should compile and start a browsing showing this:
+9. Press `CTRL-F5`. App should compile and start a browser session showing this:
    ![image-20200325114609689](image-20200325114609689.png)
-   Note: if it's the first time you're using _Uno_, it could take some times to download the latest Mono-Wasm SDK into a _temp_ folder.
+   Note: if it is the first time you're using the Uno platform, it could take some times to download the latest .NET for WebAssembly SDK into a temporary folder.
 
 ## 2. Create a control in managed code
 
@@ -191,7 +191,7 @@ To illustrate how it is possible to use this in a real application, let's create
    
    ```
 
-   It's basically a control, having 2 properties, one code `Code` and another one for `Language`.
+   This will define a control having 2 properties, one code `Code` and another one for `Language`.
 
 2. Change the `MainPage.xaml` file to the following content:
 
@@ -239,21 +239,21 @@ To illustrate how it is possible to use this in a real application, let's create
 
 ## 3. Add JavaScript & CSS files
 
-🎯 In this section, PrismJS files are download from its website and put them as assets in the app.
+🎯 In this section, PrismJS files are download from its website and placed as assets in the app.
 
-1. Go on this link: https://prismjs.com/download.html
+1. Go to this link: https://prismjs.com/download.html
 
 2. Choose desired Themes & Languages (`Default` theme + all languages is used for the demo)
 
 3. Press the `DOWNLOAD JS` button and put the `prism.js` file in the `WasmScripts` folder of the `.Wasm` project.
 
-   > Putting the `.js` file in this folder will instruct _Uno Wasm Bootstrap_ to automatically load the javascript file during startup.
+   > Putting the `.js` file in this folder will instruct _Uno Wasm Bootstrap_ to automatically load the JavaScript file during startup.
 
 4. Press the `DOWNLOAD CSS` button and put the `prism.css` file in the `WasmCSS` folder of the `.Wasm` project.
 
-   > Putting the `.css` file in this folder will instruct _Uno Wasm Bootstrap_ to automatically inject a `<link>` html instruction in the resulting `index.html` file to load it by the browser.
+   > Putting the `.css` file in this folder will instruct _Uno Wasm Bootstrap_ to automatically inject a `<link>` html instruction in the resulting `index.html` file to load it with the browser.
 
-5. Right-click on the `.Wasm` project node in the solution explorer, and pick `Edit Project File` (it can also work by just selecting the project, if the `Preview Selected Item` option is activated).
+5. Right-click on the `.Wasm` project node in the Solution Explorer, and pick `Edit Project File` (it can also work by just selecting the project, if the `Preview Selected Item` option is activated).
 
 6. Insert this in the appropriate `<ItemGroup>`:
 
@@ -266,18 +266,18 @@ To illustrate how it is possible to use this in a real application, let's create
    </ItemGroup>
    ```
 
-   > For _Uno Wasm Bootstrap_ to take those files automatically and load them with the application, they **NEED** to be put as embedded resources. A future version of Uno may remove this requirement.
+   > For _Uno Wasm Bootstrap_ to take those files automatically and load them with the application, they have to be put as embedded resources. A future version of Uno may remove this requirement.
 
 7. Compile & run
 
-8. Once loaded, press F12 and go in the `Sources` tab. Both `prism.js` & `prism.css` files should be loaded this time.
+8. Once loaded, press F12 and go into the `Sources` tab. Both `prism.js` & `prism.css` files should be loaded this time.
    ![image-20200414143931953](image-20200414143931953.png)
 
-## 4. Integrate!
+## 4. Integration
 
 🎯 In this section, PrismJS is used from the app.
 
-1. First, there's a requirement for _PrismJS_ to set the  `white-space` style at a specific value, as [documented here](https://github.com/PrismJS/prism/issues/1237#issuecomment-369846817). An easy way to do this is to set in directly in the constructor like this:
+1. First, there is a requirement for _PrismJS_ to set the  `white-space` style at a specific value, as [documented here](https://github.com/PrismJS/prism/issues/1237#issuecomment-369846817). An easy way to do this is to set in directly in the constructor like this:
 
    ``` csharp
    public PrismJsView() : base("code") // PrismJS requires a <code> element
@@ -362,43 +362,29 @@ To illustrate how it is possible to use this in a real application, let's create
 
 ## 🔬 Going further
 
-That's a very simple integration because there's no _callback_ from HTML to managed code and _PrismJS_ is a self-contained framework.
+This sample is a very simple integration as there is no _callback_ from HTML to managed code and _PrismJS_ is a self-contained framework (it does not download any other javascript dependencies).
 
-Few improvements could be done to make the code more _production ready_:
+Some additional improvements can be done to make the code more production ready:
 
-* **Make the control multi-platform**. The simple way would be to use a WebView on other platforms: that way the exact same text-rendering framework would be used everywhere. Right now this code won't compile on other targets.
-* **Create script files instead of generating dynamic javascript**. That would have the advantage of improving performance and increase the ability to debug it. Few projects are also using TypeScript to generate javascript. This approach is done by Uno itself for the `Uno.UI.Wasm` project: https://github.com/unoplatform/uno/tree/master/src/Uno.UI.Wasm.
-* **Support more PrismJS features**. There's many [_plugins_ to PrismJS](https://prismjs.com/#plugins) you can play with. Most of them are very easy to implement.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* **Make the control multi-platform**. A simple way would be to use a WebView on other platforms, giving the exact same text-rendering framework everywhere. The code of this sample won't compile on other targets.
+* **Create script files instead of generating dynamic JavaScript**. That would have the advantage of improving performance and make it easier to debug the code. A few projects are also using TypeScript to generate JavaScript. This approach is done by Uno itself for the `Uno.UI.Wasm` project: https://github.com/unoplatform/uno/tree/master/src/Uno.UI.Wasm.
+* **Support more PrismJS features**. There are many [_plugins_ for PrismJS](https://prismjs.com/#plugins) that can be used. Most of them are very easy to implement.
 
 
 
 # Article 2 - Callback to app from JavaScript
 
-In the previous article, a simple _syntax highlighter_ were used to enhance the display of text in HTML. But it's not enough for most apps: it's often required for JavaScript components to _call back_ to the application. The easiest way to do that in Uno-Wasm is by using [_DOM Events_](https://developer.mozilla.org/docs/Web/Guide/Events/Creating_and_triggering_events). Let's create an application illustrating how to use them. Application using Uno can [consume DOM Events and CustomEvents](https://platform.uno/docs/articles/wasm-custom-events.html) very easily.
+In the previous article, a simple _syntax highlighter_ was used to enhance the display of text in HTML. But it is not enough for most apps: it's often required for JavaScript components to call back into the C# side of application. The easiest way to do that in Uno for WebAssembly is by using [_DOM Events_](https://developer.mozilla.org/docs/Web/Guide/Events/Creating_and_triggering_events). Applications using Uno can [consume DOM Events and CustomEvents](https://platform.uno/docs/articles/wasm-custom-events.html) very easily.
+
+Let's create an application illustrating how to use this feature.
 
 # Sample 2 - Integration of Flatpickr
 
-📝 [Flatpickr](https://flatpickr.js.org/) is a lightweight, self-contained _Date & Time Picker_. It's an easy way to explore how a JavaScript can call-back to _managed application code_. In this case, it will be used to report when the picker is opened and the picked date & time.
+📝 [Flatpickr](https://flatpickr.js.org/) is a lightweight, self-contained date and time picker. It's an easy way to explore how a JavaScript can call back to the managed application code. In this case, this will be used to report when the picker is opened and a date and time was picked.
 
 ## 1. Create the solution in VisualStudio
 
-📝 This part is very short because it's similar to previous article:
+📝 This part is very short because it is similar to previous article:
 
 1. Create a `Cross-Platform App (Uno Platform)` project and name it `FlatpickrDemo`.
 2. Remove `.Droid`, `.iOS` & `.UWP` projects from solution.
@@ -406,7 +392,7 @@ In the previous article, a simple _syntax highlighter_ were used to enhance the 
 
 ## 2. Inject Flatpickr from CDN
 
-🎯 This section is using a CDN to get _Flatpickr_ instead of hosting the javascript directly in the application. It's not always the best solution - it creates a dependency on the Internet availability and any change made server-side could break the application. But the goal here is to demonstrate the flexibility of Uno, not how to build the best application architecture.
+🎯 This section is using a CDN to get _Flatpickr_ instead of hosting the javascript directly in the application. It is not always the best solution as it creates a dependency on the Internet availability. Any change made server-side could break the application.
 
 An easy way to achieve this is to add _JavaScript_ code to load the CSS file directly from the CDN. The _JavaScript_ portion of _Flatpickr_ will be lazy-loaded with the control later.
 
@@ -436,7 +422,7 @@ An easy way to achieve this is to add _JavaScript_ code to load the CSS file dir
    </ItemGroup>
    ```
 
-## 3. Uno controls & XAML
+## 3. Uno controls and XAML
 
 🎯 This section is creating a control used in the XAML. It will activate `Flatpickr` on the control's `<input>` element.
 
@@ -539,11 +525,11 @@ An easy way to achieve this is to add _JavaScript_ code to load the CSS file dir
 
 📝 Almost there, still nedd to _call back_ to application.
 
-## 4. Add a way to _callback_ managed code from JavaScript
+## 4. Add a way to call managed code from JavaScript
 
 🎯 This section will use `CustomEvent` to route Flatpickr's events to managed code.
 
-1. Register event handlers for 2 custom events: `DateChanged` and `OpenedStateChanged`. To achieve this, put this code **at the end of the `FlatpickrView` constructor:
+1. Register event handlers for 2 custom events: `DateChanged` and `OpenedStateChanged`. To achieve this, put this code at the end of the `FlatpickrView` constructor:
 
    ``` csharp
    // Register event handler for custom events from the DOM
@@ -551,7 +537,7 @@ An easy way to achieve this is to add _JavaScript_ code to load the CSS file dir
    this.RegisterHtmlCustomEventHandler("OpenedStateChanged", OnOpenedStateChanged, isDetailJson: false);
    ```
 
-2. Add the implementations for the 2 handles in the class:
+2. Add the implementation for the two handlers in the class:
 
    ``` csharp
    private void OnDateChanged(object sender, HtmlCustomEventArgs e)
@@ -608,9 +594,9 @@ An easy way to achieve this is to add _JavaScript_ code to load the CSS file dir
 
 ## 🔬 Going further
 
-This article illustrate how to integrate external assets (javascript & css files) and how to leverage JavaScript's `CustomEvent` in a Uno application.
+This article illustrates how to integrate external assets (javascript and css files) and how to leverage JavaScript's `CustomEvent` in an Uno application.
 
-More steps could be done to make the code more _production ready_:
+More steps could be done to make the code more production ready:
 
 * **Make the control multi-platform**. Many DateTime pickers exists on all platforms. It should be easy on other platforms to connect the same control to another greate Date picker native to the platform - no need to embed a WebView for this on other platforms.
 * **Create script files instead of generating dynamic javascript**. As in previous article, this would have the advantage of improving performance and increase the ability to debug it.
@@ -634,7 +620,7 @@ More steps could be done to make the code more _production ready_:
 
 If you prefer to use TypeScript instead of Javascript, you can set it up to output files in the `WasmScripts` folder. Many projects are doing this, the technique won't be covered in this article.
 
-Here's some projects doing this:
+Here's some projects using TypeScript:
 
 * [Uno Calculator](https://github.com/unoplatform/calculator/tree/uno/src/Calculator.Wasm) - port of Windows Calculator.  Uses TypeScriptfor analytics integration.
 * [Uno Playground](https://github.com/unoplatform/Uno.Playground/tree/master/src/Uno.Playground.WASM/ts). Uses TypeScript for analytics and fragment navigation.
