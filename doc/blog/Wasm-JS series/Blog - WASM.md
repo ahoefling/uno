@@ -75,40 +75,40 @@ Here is a list of helper methods used to facilitate the integration with the HTM
   RemoveAttribute("href");
   ```
 
-* The method `base.SetHtmlContent()` could be used to set arbitrary HTML content as child of the control.
+* The method `base.SetHtmlContent()` can be used to set arbitrary HTML content as child of the control.
 
   ``` csharp
-  SetHtmlContent("<h2>Welcome on Uno Platform!</h2>");
+  SetHtmlContent("<h2>Welcome to Uno Platform!</h2>");
   ```
 
-  > Note: don't use this unless your control doesn't include any _managed_ children, or you'll get unexpected results.
+  > Note: don't use this unless your control doesn't include any managed children. Doing so can result in inconsistent runtime errors.
 
-* Finally, it's possible to invoke an arbitrary bunch of JavaScript code by using the _static_ method `WebAssembleRuntime.InvokeJS()`. Once there, it directly in the browser, so it's possible to make almost anything. It's possible to use the `HtmlId` property of the element to locate it in JavaScript code.
-  If the control has been loaded (after de `Loaded` router event), it will be available directly by calling the JavaScript `document.getElementById()`. But it's also possible to access it before using the  `Uno.UI.WindowManager.current.getView(<HtmlId>)` function in JavaScript.
+* Finally, it is possible to invoke an arbitrary piece of JavaScript code by using the static method `WebAssembleRuntime.InvokeJS()`. The script is directly executed in the context of the browser, giving the ability to perform anything that Javascript can do. It is possible to use the `HtmlId` property of the element to locate it in JavaScript code.
+  If the control has been loaded (after the `Loaded` event has been raised), it will be available directly by calling `document.getElementById()`. But it's also possible to access it before that by using the  `Uno.UI.WindowManager.current.getView(<HtmlId>)` function in JavaScript.
 
-To illustrate how it's possible to use this in a real application, let's create one to integrate a pretty simple _syntax highlighter_ named [`PrismJS`](https://prismjs.com/).
+To illustrate how it is possible to use this in a real application, let's create one to integrate a pretty simple Syntax Highlighter named [`PrismJS`](https://prismjs.com/).
 
-# Sample - Integration of PrismJS in a project
+# Integration of PrismJS in a project
 
 ## 0. Before starting
 
-📝 To reproduce the code in this article, you must [prepare your development environment](https://platform.uno/docs/articles/get-started.html).
+📝 To reproduce the code in this article, you must [prepare your development environment using our Getting Started article](https://platform.uno/docs/articles/get-started.html).
 
-## 1. Creating the projects
+## 1. Create the projects
 
-🎯 This section is very similar to the [_Getting Started_ in the official documentation](https://platform.uno/docs/articles/getting-started-tutorial-1.html).
+🎯 This section is very similar to the [_Getting Started_ tutorial in the official documentation](https://platform.uno/docs/articles/getting-started-tutorial-1.html).
 
-1. Start **VisualStudio 2019**
+1. Start **Visual Studio 2019**
 2. Click `Create a new project`
    ![image-20200325113112235](image-20200325113112235.png)
-3. **Search for "Uno"** and pick `Cross-Platform App (Uno Platform)`. Pay attention to select the `App`, not the `Library` project type.
+3. **Search for "Uno"** and pick `Cross-Platform App (Uno Platform)`.
    ![image-20200325113532758](image-20200325113532758.png)
    Select it and click `Next`.
 4. Give a project name and folder as you wish. It will be named `PrismJsDemo` here.
 5. Click `Create` button.
 6. Delete the `.Droid`, `.iOS` and `.UWP` projects.
    
-   > Note: it's definitely possible to build multi-platforms controls, but it's the goal of another article. So removing them will avoid misleading compilation errors for now.
+   > Note: it is possible to build multi-platforms controls, but it's the goal of another article. Removing them will avoid misleading compilation errors for now.
 7. Right-click on the solution and pick `Manage NuGet Packages for Solution...`
    ![image-20200325114155796](image-20200325114155796.png)
 8. Update to latest version of `Uno` dependencies. **DO NOT UPDATE THE `Microsoft.Extensions.Logging` dependencies** to latest versions.
