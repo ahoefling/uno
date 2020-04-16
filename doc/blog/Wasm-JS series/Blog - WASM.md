@@ -12,7 +12,7 @@ Behind a Uno-Wasm project, there's a component called [`Uno.Wasm.Bootstrap`](htt
 
 In the HTML world, everything running in the browser must be downloaded from a server. This is called assets. To integrate existing javascript frameworks, you can either download them directly from the Internet (usually from a CDN service) or embed them with your app.
 
-Uno Wasm Bootstrap can automatically embed any asset and deploy them with the app. Some of them (CSS & JavaScript) could also be loaded with the app. Here's how to declare them in a _Uno Wasm_ project:
+The Uno Bootstrapper can automatically embed any asset and deploy them with the app. Some of them (CSS & JavaScript) can also be loaded with the app. Here's how to declare them in a _Uno Wasm_ project:
 
 1. **JavaScript files** should be in `WasmScripts`  folder: they will be copied to output folder and loaded automatically by the bootstrapper when the page loads. **They must be marked as `EmbeddedResources`**.
 
