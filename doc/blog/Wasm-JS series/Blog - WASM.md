@@ -2,7 +2,7 @@
 
 Uno fully embraces HTML5 as its display backend on its WASM target. As a result, it's possible to integrate with almost any existing JavaScript library to extend the behavior of an app.
 
-This article will first review how Uno interoperates with HTML5, following by an integration of a simple JavaScript-based syntax highlighter in a Uno project. Another article will go further and deeper in the dotnet/JavaScript interop.
+This article will first review how Uno interoperates with HTML5, followed by a fully-worked example integration of a simple JavaScript-based syntax highlighter in an Uno project. In a future article we will go further and deeper into the .NET/JavaScript interop.
 
 # Uno Wasm Bootstrap - where it starts
 
