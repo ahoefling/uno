@@ -14,7 +14,7 @@ In the HTML world, everything running in the browser must be downloaded from a s
 
 The Uno Bootstrapper can automatically embed any asset and deploy them with the app. Some of them (CSS & JavaScript) can also be loaded with the app. Here's how to declare them in a _Uno Wasm_ project:
 
-1. **JavaScript files** should be in `WasmScripts`  folder: they will be copied to output folder and loaded automatically by the bootstrapper when the page loads. **They must be marked as `EmbeddedResources`**.
+1. **JavaScript files** should be in `WasmScripts`  folder: they will be copied to output folder and loaded automatically by the bootstrapper when the page loads. **They must be marked with the `EmbeddedResources` build action**.
 
 2. **CSS Style files** should be in the `WasmCSS` folder: they will be copied to output folder and referenced in the _html head_ of the application. **They must be marked as `EmbeddedResources`**.
 
