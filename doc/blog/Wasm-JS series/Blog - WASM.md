@@ -1,6 +1,6 @@
 # Embedding Existing Javascript Components Into Uno-WASM
 
-Uno fully embrace HTML5 as its display backend on its WASM target. Because of that, it's possible to integrate to almost any existing JavaScript library to extend the behavior of an app.
+Uno fully embraces HTML5 as its display backend on its WASM target. As a result, it's possible to integrate with almost any existing JavaScript library to extend the behavior of an app.
 
 This article will first review how Uno interoperates with HTML5, following by an integration of a simple JavaScript-based syntax highlighter in a Uno project. Another article will go further and deeper in the dotnet/JavaScript interop.
 
