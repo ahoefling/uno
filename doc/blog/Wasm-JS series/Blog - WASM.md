@@ -16,20 +16,20 @@ The Uno Bootstrapper can automatically embed any asset and deploy them with the 
 
 1. **JavaScript files** should be in `WasmScripts`  folder: they will be copied to output folder and loaded automatically by the bootstrapper when the page loads. **They must be marked with the `EmbeddedResources` build action**.
 
-2. **CSS Style files** should be in the `WasmCSS` folder: they will be copied to output folder and referenced in the _html head_ of the application. **They must be marked as `EmbeddedResources`**.
+2. **CSS Style files** should be in the `WasmCSS` folder: they will be copied to output folder and referenced in the _HTML head_ of the application. **They must be marked with the `EmbeddedResources` build action**.
 
-3. **Asset files** should be marked as `Content` in the app. The file will be copied to output folder and will preserve the same relative path.
+3. **Asset files** should be marked with the `Content` build action in the app. The file will be copied to output folder and will preserve the same relative path.
 
-4. Alternatively, **any kind of asset files** can be placed directly in the `wwwroot` folder as you would do with any standard _aspnet core_ project. They will be deployed with the app, but the application code will have the responsibility to fetch and use them.
+4. Alternatively, **any kind of asset files** can be placed directly in the `wwwroot` folder as you would do with any standard ASP.NET Core project. They will be deployed with the app, but the application code will have the responsibility to fetch and use them.
 
    > **Is it an Aspnet Core project?**
-   > Nope. Some of the deployment features, like the `wwwroot` folder, the VisualStudio integration for running and debugging is reused as an Aspnet Core project, but that's it. The C# code you put in such project will run in the browser, using the mono-wasm runtime. Right now there's no _server side_ component in such project.
+   > No, but it shares a common structure. Some of the deployment features, like the `wwwroot` folder, the VisualStudio integration for running and debugging are reused in a similar way to an ASP.NET Core project. The C# code put in such project will run in the browser, using the .NET runtime. There is no need for a server side component in such a project.
 
 ## Uno-Wasm controls are actually HTML5 elements
 
-The [philosophy of Uno](https://platform.uno/docs/articles/concepts/overview/philosophy-of-uno.html) is to rely on native platforms as much as possible. In the context of a browser, that's the HTML5 DOM. It means each time you're creating an instance of a class deriving from `UIElement`, you're actually creating a HTML element.
+The [philosophy of Uno](https://platform.uno/docs/articles/concepts/overview/philosophy-of-uno.html) is to rely on native platforms where it makes sense. In the context of a browser, that's the HTML5 DOM. It means each time you're creating an instance of a class deriving from `UIElement`, you're actually creating a HTML element.
 
-That aslo means you can control how this element is created.  By default is a `<div>`, but you can change this directly in the constructor by setting the `htmlTag` parameter to whatever required. Example:
+That also means that it is possible to control how this element is created.  By default it is a `<div>`, but it can be changed in the constructor by providing the `htmlTag` parameter to the one required. For example:
 
 ``` csharp
 // MyControl constructors
@@ -38,9 +38,9 @@ public MyControl() : base("input") // Will create an "input" HTML element
 public MyControl() : base(htmlTag: "span") // Will create a "span" HTML element
 ```
 
-Once created, it's possible to interact directly with this element by calling helper methods supplied by Uno on base classes. Obviously those methods are only available when targeting the _Wasm_ platform.
+Once created, it's possible to interact directly with this element by calling helper methods supplied by Uno on base classes. Obviously those methods are only available when targeting the _Wasm_ platform. (You can use [conditional code](https://platform.uno/docs/articles/platform-specific-csharp.html) to use these methods in a multi-platform project.)
 
-Helper methods:
+Here is a list of helper methods used to facilitate the integration with the HTML DOM:
 
 * The method `base.SetStyle()` can be used to set a CSS Style on the html element. Example:
 
@@ -62,7 +62,7 @@ Helper methods:
   ResetStyle("text-shadow", "color");
   ```
 
-* The methods `base.SetAttribute()` and `base.RemoteAttribute()` can be used to set HTML Attributes on the html element. Example:
+* The `base.SetAttribute()` and `base.RemoteAttribute()` methods can be used to set HTML attributes on the element:
 
   ``` csharp
   // Set the "href" attribute of an <a> element
