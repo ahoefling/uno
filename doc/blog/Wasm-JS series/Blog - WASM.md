@@ -6,7 +6,7 @@ This article will first review how Uno interoperates with HTML5, following by an
 
 # Uno Wasm Bootstrap - where it starts
 
-Behind a Uno-Wasm project, there's a component called [`Uno.Wasm.Bootstrap`](https://github.com/unoplatform/Uno.Wasm.Bootstrap). It contains the tooling required to build, package, deploy and run a _.NET_ project using _Mono_ in a web browser using _WebAssembly_. It's automatically include in any
+Behind a Uno-Wasm project, there's a component called [`Uno.Wasm.Bootstrap`](https://github.com/unoplatform/Uno.Wasm.Bootstrap). It contains the tooling required to build, package, deploy and run a _.NET_ project in a web browser using _WebAssembly_. It's automatically included in any Uno application created from the templates.
 
 ## Embedding assets
 
